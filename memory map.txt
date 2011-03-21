@@ -1,0 +1,149 @@
+No RAM map was available so I started figuring it on my own.
+These are some messy notes describing what I could discover so far
+- Billy Wenge-Murphy
+
+===========================================================
+(1b) is a one byte value, (2b) is 2
+Addresses are in hexadecimal but not denoted with 0x
+Values in hex ARE denoted with 0x, otherwise assume they're decimal
+
+
+All 1 byte. Player 2's stats are next byte after each.
+
+Punch:			049F
+Kick:			04A3
+Weapon:			04A7
+Throwing:		04AB
+Agility:		04AF
+Defense: 		04B3
+Strength:		04B7
+Willpower:		04BB
+Stamina:		04BF
+Max power:		04C3
+Money:
+	04C7	Lower cents digit
+	04C8	Lower dollars digit
+	04C9	Upper TWO dollars digits?
+		Setting 1 - 9 sets "10" - "90" for  upper two digits. Set 0 and they disappear.
+Inventory:		064D - 0654
+
+
+Shops:
+	0036:
+		Shop graphics/animation related
+		0 normally
+		For shops with animated doors:
+			changes with animation: 0, 41, 58, 59, 123
+		Shops without animated doors:
+			changes to 35 once inside
+	0084: Shopkeeper position (normally 0x1E?)
+	00CC:
+		Shop sprite pointer (of some kind). Messing with value loads in different graphics for shopkeeper
+		0 while outside shops
+	00CB: Player graphic while in shop (starts game as 0x1A. 0x1C is bowl of rice! 0x23 is hamburger...)
+
+
+
+
+NPC positions:
+
+	0084 - 0086 (1b): X position of an NPC
+	00A0, 00A1 (1b): Y pos of NPC
+	00A9, 00AA (1b): NPC visibility? (set to > 1 for invisible)
+	02B9, 02BD (1b): Animation tracker of sprite. Toggles back and forth as sprites walk in place (by cheat/lock X pos)
+
+	006A:
+	052A: Each is a walking animation tracker (?) of an NPC
+		(Freezing this value allows the sprites to continue to move, but they glide)
+	03CF: Whether item is picked up?
+	0089, 038E: item x pos			
+
+
+
+Player 1:
+	0083 (1b): X pos
+	009E (1b): Y pos (112 up against shops, 50 bottom of screen)
+	00A7: Player invisibility? (set to 0x40 and became invisible)
+
+	02E2 - 02EF: Seem to depend on whether player is behind object sprite. Investigate further.
+
+	0005: Facing?
+		64 right
+		0 left
+		252? At moment of dashing into right edge of screen? (right before fall)
+	001E: Physics/status tracker:
+		0x10 - Normal
+		0x0F - Falling (very rapidly switches between other values while about to hit ground)
+		0x0F - (Also!) standing up on a ledge
+		0x00 - Lying on ground
+		0x00 - (Also!) touching left edge of screen
+		0xFF - Touching right edge of screen
+			IMPORTANT NOTE: Flips between MANY values with NPCs around, including enemies, townfolk
+				and coins. Does not flip between values for unmoving items, but does for
+				moving (thrown) items, or items player is hitting with
+	004F: Moving flag
+		0x81 while moving, 0x80 otherwise
+	005D: Running physics tracker
+		128 while running (either direction)
+		32 while stopping
+		0 stopped
+		192 while leaping (jumping after running start, or falling from hitting a wall)
+		64 while jumping (straight up)
+	0068: Walked/ran distance tracker
+		Continues to increment while moving (including if you quickly change directions without stopping)
+		Resets to 0 on stop
+		
+	00D3: Animation frame tracker.
+		Rapidly flips between values as animation plays:
+			0x00, 0x01, 0x02 walking left	(0x00 facing left)
+			0x80, 0x81, 0x82 walking right	(0x80 facing right)
+			0xA1 - 0xA3 Puncing right
+			0x21 - 0x23 Punching left
+			0x24 - 0x26 Kicking left
+			0xA4 - 0xA6 Kicking right
+			0x0A - Jumping (left)
+			0x8A - Jumping (right)
+			0x0C/0x8C - Touching ground when landing
+	006F (1b): Facing?
+			128 left, 0 right.
+			Retains prev value walking up/down
+	04D4 (1b): Facing?
+			1 right, 2 left.
+			Retains prev value walking up/down
+	030F (1b): Facing? (including up-down). Here facing means direction they last moved, or are moving
+		192 left
+		64 right
+		0 up
+		128 down
+		160 down-left
+		32 up-right
+		96 down-right
+		224 up-left
+
+		(Seem like bit flags, obviously)
+
+	032D (1b): Another direction tracker. Value depends on facing
+		160 down (facing right)
+		64	down (facing left)
+		96	up (facing left)
+		192 up (facing right)
+		32 diagonally down (either one)
+		224 diagonally up (either one)
+		
+		
+	0335 (1b): Up/down walk flag?
+		1 when moving (or moved) up, 254 down, 0 left/right
+	0388 (2b): X pos (different value)
+	03C9 (1b): Key press (and release) counter. Increments when press arrow, or release
+
+
+
+
+Other:
+
+	003F (1b): Pause menu status
+		160 when paused
+		96 menu sliding in
+		64 menu sliding out
+		0 not paused
+
