@@ -74,6 +74,9 @@ NPC positions:
 Player 1:
 
 	0083 (1b): X pos
+	008C (1b): Area section
+		X position only goes 0-255, so this tells you which 256px section the player is in
+		Starts with 0 on the left
 	009E (1b): Y pos (112 up against shops, 50 bottom of screen)
 	00A7: Player invisibility? (set to 0x40 and became invisible)
 

@@ -110,6 +110,7 @@ while true do
 	--this value is too small. Some screens > 256px. Must be other values involved
 	local px = memory.readbyte(0x0083);
 	local py = memory.readbyte(0x009E);
+	px = px + memory.readbyte(0x008C) * 256;
 	gui.text(120, 180, "Player X, Y: " .. px .. " " .. py);
 
 	if (floater.active) then
