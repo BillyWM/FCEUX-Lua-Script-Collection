@@ -29,18 +29,29 @@ Inventory:		064D - 0654
 
 
 Shops:
+
 	0036:
-		Shop graphics/animation related
-		0 normally
+		Related to entering doors 0 normally. Tracks the process of entering a shop or other door
+			not just the related animation
 		For shops with animated doors:
 			changes with animation: 0, 41, 58, 59, 123
+			Setting 123, for example, will immediately pop you inside a shop. Usually this appears
+				to be the last shop you visited, unless you move from one town to another
 		Shops without animated doors:
-			changes to 35 once inside
+			changes to 72 once inside
+		Other doors:
+			0, 41, 58, 59, then back to 0 on the other side.
+			123 and 72 mark sub-areas, then?
+		No change when zoning between normal areas (walking off side of screen)
 	0084: Shopkeeper position (normally 0x1E?)
 	00CC:
 		Shop sprite pointer (of some kind). Messing with value loads in different graphics for shopkeeper
 		0 while outside shops
-	00CB: Player graphic while in shop (starts game as 0x1A. 0x1C is bowl of rice! 0x23 is hamburger...)
+	00CB: Player graphic while in shop. Varies by shop (most are broken graphics). These work for bookstore:
+		0x1A Normal
+		0x1C Bowl of rice
+		0x20 Weapon
+		0x23 Hamburger
 
 
 
@@ -61,6 +72,7 @@ NPC positions:
 
 
 Player 1:
+
 	0083 (1b): X pos
 	009E (1b): Y pos (112 up against shops, 50 bottom of screen)
 	00A7: Player invisibility? (set to 0x40 and became invisible)
@@ -137,8 +149,6 @@ Player 1:
 	03C9 (1b): Key press (and release) counter. Increments when press arrow, or release
 
 
-
-
 Other:
 
 	003F (1b): Pause menu status
@@ -146,4 +156,12 @@ Other:
 		96 menu sliding in
 		64 menu sliding out
 		0 not paused
+
+	0042: Area tracker
+		Goes from 0x00 (beginning) to 0x22 (final rooftop)
+		Keeps value while in shops
+
+		Switching this while in one area will immediately cause it to start behaving like the new area including
+			collisions and hotspots (i.e. leaving area, pits, going in shops, etc). Will scroll in broken
+			graphics when screen scrolls, and can even make (non-broken) townfolk suddenly appear
 
