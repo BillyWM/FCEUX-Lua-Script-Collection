@@ -23,7 +23,7 @@ item_names = {
 	"No Thanks", "Nothing", "Main Menu"
 }
 
---Copy all the elements with a # in front, meaning "equipped"
+--Duplicate all the elements adding a # in front, meaning "equipped"
 num = #item_names;
 for i = 1, num do
 	local t = item_names[i];
@@ -32,10 +32,15 @@ end
 
 stats = {}
 inventory = {}
+floater = {text="", x=0, y=0, active=false, elapsedFrames=0}
 
 --Float a money value up the screen when coins are picked up
 function float_pickup(amount)
-	print (amount);
+	floater.active = true;
+	floater.x = 150;
+	floater.y = 100;
+	floater.elapsedFrames = 0;
+	floater.text = string.format("$%.2f", amount);
 end;
 
 --For RCR's insane money system:
@@ -51,6 +56,7 @@ function DEC_HEX(IN)
     end
     return tonumber(OUT)
 end
+
 
 while true do
 
@@ -106,12 +112,19 @@ while true do
 	local py = memory.readbyte(0x009E);
 	gui.text(120, 180, "Player X, Y: " .. px .. " " .. py);
 
+	if (floater.active) then
+		floater.y = floater.y - 0.7;
+		floater.elapsedFrames = floater.elapsedFrames + 1;
+		gui.text(floater.x, floater.y, floater.text);
+		if (floater.elapsedFrames > 150) then floater.active = false end
+	end
+
 	--Displays character stats when game is paused.
 	--For convenience, goes away as soon as pause menu starts sliding out (64)
 	--Since this depends on menu values, hitting select can keep it on screen
 	if (paused ~= 0 and paused ~= 64) then
 
-		--[[gui.drawbox(10, 32, 70, 64, "#000066");
+		gui.drawbox(10, 32, 70, 64, "#000066");
 		gui.text(10,32, "Punch: " .. stats.punch);
 		gui.text(10,40, "Kick: " .. stats.kick);
 		gui.text(10,48,"Weapon: " .. stats.weapon);
@@ -122,7 +135,6 @@ while true do
 		gui.text(10,88,"Willpower: " .. stats.willpower);
 		gui.text(10,96,"Stamina: " .. stats.stamina);
 		gui.text(10,104,"Max power: " .. stats['max power']);
-		]]
 
 		for i,v in ipairs(inventory) do
 			gui.text(100, 24 + i * 8, item_names[inventory[i] + 1]);
@@ -143,3 +155,6 @@ while true do
 
 	emu.frameadvance();
 end
+
+
+
