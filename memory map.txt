@@ -23,8 +23,9 @@ Max power:		04C3
 Money:
 	04C7	Lower cents digit
 	04C8	Lower dollars digit
-	04C9	Upper TWO dollars digits?
-		Setting 1 - 9 sets "10" - "90" for  upper two digits. Set 0 and they disappear.
+	04C9	Upper two dollars digits
+		These money values are stored in a really strange way described here:
+		http://www.gamefaqs.com/nes/563453-river-city-ransom/faqs/20905
 Inventory:		064D - 0654
 
 
@@ -54,11 +55,17 @@ Shops:
 		0x23 Hamburger
 
 
+Sprites (any/general):
 
+	02E3 (1b): Screen-relative X pos
+		Where a sprite is in the viewable area.
 
 NPC positions:
 
 	0084 - 0086 (1b): X position of an NPC
+	008E, 008F (1b): Area section of NPC
+		(see below under "Player 1" for explanation)
+	0089: item x pos
 	00A0, 00A1 (1b): Y pos of NPC
 	00A9, 00AA (1b): NPC visibility? (set to > 1 for invisible)
 	02B9, 02BD (1b): Animation tracker of sprite. Toggles back and forth as sprites walk in place (by cheat/lock X pos)
@@ -67,7 +74,6 @@ NPC positions:
 	052A: Each is a walking animation tracker (?) of an NPC
 		(Freezing this value allows the sprites to continue to move, but they glide)
 	03CF: Whether item is picked up?
-	0089, 038E: item x pos			
 
 
 
@@ -77,10 +83,9 @@ Player 1:
 	008C (1b): Area section
 		X position only goes 0-255, so this tells you which 256px section the player is in
 		Starts with 0 on the left
-	009E (1b): Y pos (112 up against shops, 50 bottom of screen)
-	00A7: Player invisibility? (set to 0x40 and became invisible)
+	009E (1b): Y pos (up is higher, down is lower!)
 
-	02E2 - 02EF: Seem to depend on whether player is behind object sprite. Investigate further.
+	00A7: Player invisibility? (set to 0x40 and became invisible)
 
 	0005: Facing?
 		64 right
@@ -167,4 +172,21 @@ Other:
 		Switching this while in one area will immediately cause it to start behaving like the new area including
 			collisions and hotspots (i.e. leaving area, pits, going in shops, etc). Will scroll in broken
 			graphics when screen scrolls, and can even make (non-broken) townfolk suddenly appear
+
+	0497: Hit timer
+		Counts up by 1 per second while player takes no blows from enemies
+		Goes down significantly per blow, but not necessarily to 0
+		Freezes while in town. (only?) activates again when enemy is around.
+
+	03EB: Enemy dealt damage counter?
+		Increases when an enemy hits the player. Each enemy seems to have their own count: changes back and forth
+			as enemies take turns dealing blows. Seems to be some kind of working RAM, storing a damage value
+			from elsewhere.
+
+	00DC (1b): Screen scroll
+	00F6 (1b): Also screen scroll? (stores identical value)
+
+	003D: Scroll section
+		Like the section tracker for player, but related to scroll offset.
+		Related addr: 00DC
 
