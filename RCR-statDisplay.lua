@@ -38,8 +38,8 @@ player = {}
 --Float a money value up the screen when coins are picked up
 function float_pickup(amount)
 	floater.active = true;
-	floater.x = player.screenX;
-	floater.y = 240 - player.y;
+	floater.x = player.screenX - 12;
+	floater.y = (240 - player.y) - 40;
 	floater.elapsedFrames = 0;
 	floater.text = string.format("$%.2f", amount);
 end;
@@ -117,7 +117,7 @@ while true do
 
 	--Animate the floating money pickup
 	if (floater.active) then
-		floater.y = floater.y - 0.7;
+		floater.y = floater.y - 1.1;
 		floater.elapsedFrames = floater.elapsedFrames + 1;
 		gui.text(floater.x, floater.y, floater.text);
 		if (floater.elapsedFrames > 150) then floater.active = false end
