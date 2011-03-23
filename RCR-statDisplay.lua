@@ -1,7 +1,9 @@
 -- Displays some info in River City Ransom
+-- Author: Billy Wenge-Murphy (http://billy.wenge-murphy.com/)
+-- Hack freely.
 
 --Item names for belongings (inventory) and shop item identification.
---Luckily it's an unbroken list starting at 0x00 so numerical indexes are omitted
+--Luckily it's an unbroken list starting at 0x00
 --List from: http://shrines.rpgclassics.com/nes/rcr/hacking.shtml
 item_names = {
 	"Nothing", "Donut", "Muffin", "Bagel", "Honey Bun", "Croissant", "Sugar", "Toll House",
@@ -63,7 +65,8 @@ while true do
 
 	------------ READ IN SOME VALUES ----------------------------
 
-	screen_scroll = memory.readbyte(0x00DC);
+	 --relative screen scroll per section (0-255)
+	scroll_rel = memory.readbyte(0x00DC);
 
 	--figure out how much money they have
 	money = DEC_HEX(memory.readbyte(0x04C7)) / 100 +	--cents
@@ -94,26 +97,26 @@ while true do
 	end
 
 	runjump_byte = memory.readbyte(0x005D);
-	is_running = (runjump_byte == 128 or runjump_byte == 32);
-	is_walking = (memory.readbyte(0x004F) == 0x81);
-	is_jumping = (runjump_byte == 64);
-	is_leaping = (runjump_byte == 192);
+	player.running = (runjump_byte == 128 or runjump_byte == 32);
+	player.walking = (memory.readbyte(0x004F) == 0x81);
+	player.jumping = (runjump_byte == 64);
+	player.leaping = (runjump_byte == 192);
 
 	local seg = memory.readbyte(0x008C);
 	player.x = memory.readbyte(0x0083);
 	player.y = memory.readbyte(0x009E);
 	player.x = player.x + (seg * 256); --true x value
-	scroll_abs = screen_scroll + (memory.readbyte(0x003D) * 256);
+	scroll_abs = scroll_rel + (memory.readbyte(0x003D) * 256);
 	player.screenX = player.x - scroll_abs;
 
 	------------------- DO DISPLAY OF VALUES -------------------------------
 
 	gui.text(0,0, ""); -- force clear of previous text
 	gui.text(0, 180, "Player X, Y: " .. player.x .. " " .. player.y .. " scroll: " .. scroll_abs .. " screenX: " .. player.screenX);
-	if (is_running) then gui.text(5,190,"running") end
-	if (is_walking) then gui.text(30, 190, "walking") end
-	if (is_jumping) then gui.text(60, 190, "jumping") end
-	if (is_leaping) then gui.text(60, 190, "leaping") end
+	if (player.running) then gui.text(5,190,"running") end
+	if (player.walking) then gui.text(30, 190, "walking") end
+	if (player.jumping) then gui.text(60, 190, "jumping") end
+	if (player.leaping) then gui.text(60, 190, "leaping") end
 
 	--Animate the floating money pickup
 	if (floater.active) then
