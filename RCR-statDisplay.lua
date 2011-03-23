@@ -33,12 +33,13 @@ end
 stats = {}
 inventory = {}
 floater = {text="", x=0, y=0, active=false, elapsedFrames=0}
+player = {}
 
 --Float a money value up the screen when coins are picked up
 function float_pickup(amount)
 	floater.active = true;
-	floater.x = 150;
-	floater.y = 100;
+	floater.x = player.screenX;
+	floater.y = 240 - player.y;
 	floater.elapsedFrames = 0;
 	floater.text = string.format("$%.2f", amount);
 end;
@@ -47,26 +48,25 @@ end;
 --Converts from decimal to hex....and then back to dec.
 --Credit: "Lostgallifreyan", http://lua-users.org/lists/lua-l/2004-09/msg00054.html
 function DEC_HEX(IN)
-    local B,K,OUT,I,D=16,"0123456789ABCDEF","",0
+	local B,K,OUT,I,D=16,"0123456789ABCDEF","",0
 	if (IN == 0) then return 0 end
-    while IN>0 do
-        I=I+1
-        IN,D=math.floor(IN/B),math.mod(IN,B)+1
-        OUT=string.sub(K,D,D)..OUT
-    end
-    return tonumber(OUT)
+	while IN>0 do
+		I=I+1
+		IN,D=math.floor(IN/B),math.mod(IN,B)+1
+		OUT=string.sub(K,D,D)..OUT
+	end
+	return tonumber(OUT)
 end
 
 
 while true do
 
-	--make player a hamburger in shops
-	--memory.writebyte(0x00CB, 0x23);
-
 	------------ READ IN SOME VALUES ----------------------------
 
+	screen_scroll = memory.readbyte(0x00DC);
+
 	--figure out how much money they have
-	money = DEC_HEX(memory.readbyte(0x04C7)) / 100 + 	--cents to decimal
+	money = DEC_HEX(memory.readbyte(0x04C7)) / 100 +	--cents
 			DEC_HEX(memory.readbyte(0x04C8)) +			--dollars
 			DEC_HEX(memory.readbyte(0x04C9)) * 10;		--higher dollars
 
@@ -99,20 +99,23 @@ while true do
 	is_jumping = (runjump_byte == 64);
 	is_leaping = (runjump_byte == 192);
 
+	local seg = memory.readbyte(0x008C);
+	player.x = memory.readbyte(0x0083);
+	player.y = memory.readbyte(0x009E);
+	player.x = player.x + (seg * 256); --true x value
+	scroll_abs = screen_scroll + (memory.readbyte(0x003D) * 256);
+	player.screenX = player.x - scroll_abs;
+
 	------------------- DO DISPLAY OF VALUES -------------------------------
 
 	gui.text(0,0, ""); -- force clear of previous text
+	gui.text(0, 180, "Player X, Y: " .. player.x .. " " .. player.y .. " scroll: " .. scroll_abs .. " screenX: " .. player.screenX);
 	if (is_running) then gui.text(5,190,"running") end
 	if (is_walking) then gui.text(30, 190, "walking") end
 	if (is_jumping) then gui.text(60, 190, "jumping") end
 	if (is_leaping) then gui.text(60, 190, "leaping") end
 
-	--this value is too small. Some screens > 256px. Must be other values involved
-	local px = memory.readbyte(0x0083);
-	local py = memory.readbyte(0x009E);
-	px = px + memory.readbyte(0x008C) * 256;
-	gui.text(120, 180, "Player X, Y: " .. px .. " " .. py);
-
+	--Animate the floating money pickup
 	if (floater.active) then
 		floater.y = floater.y - 0.7;
 		floater.elapsedFrames = floater.elapsedFrames + 1;
@@ -140,15 +143,6 @@ while true do
 		for i,v in ipairs(inventory) do
 			gui.text(100, 24 + i * 8, item_names[inventory[i] + 1]);
 		end
-
-		--Shorter version for stats, but unsorted:
-		--[[
-		local text_y = 32;
-		for k,v in pairs(stats) do
-			gui.text(10, text_y, k .. ": " .. v);
-			text_y = text_y + 8;
-		end
-		]]
 
 	end
 
