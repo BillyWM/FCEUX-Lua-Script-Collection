@@ -294,6 +294,7 @@ List of areas:
 	0x19 Oak Hill Mall
 	0x1A Burb Village
 	0x1B Burb Village
+	0x1C River City High
 
 
 												
@@ -307,6 +308,8 @@ List of areas:
 
 	(cont)
 
+															0x1C
+															 |
 									0x18 -- 0x19 -- 0x1A -- 0x1B
 									 |
 					0x15 -- 0x16 -- 0x17
