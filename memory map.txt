@@ -73,7 +73,7 @@ NPCs/enemies:
 	052A: Each is a walking animation tracker (?) of an NPC
 		(Freezing this value allows the sprites to continue to move, but they glide)
 	0097, 0098:
-		Somehow related to up-down movement of NPCS.
+		Somehow related to up-down movement of NPCs.
 		Flips rapidly between many values as they move
 	009D:
 		Takes various vaguely bitflag-looking values when an NPC dies, but also at other times (32, 64, 112, 88, etc)
@@ -92,7 +92,7 @@ NPCs/enemies:
 			0x0D: Crate
 			0x0E: Tire
 			0x0F: Trash can
-	00D5, 00D6: Animation track of enemy
+	00D5, 00D6: Animation tracker of enemy
 
 Items:
 
@@ -260,4 +260,64 @@ Other:
 	0110: 15 normally, 12 in all pause submenus (belongings/password/level/status/help)
 	0111: 12 normally, 9 in belongs + help submenu, 15 in others
 	0112, 0113: Flips to various values depending on area or whether in shop
+
+
+
+==============================
+
+List of areas:
+	0x00 Cross Town High (beginning)
+	0x01 Sticksville
+	0x02 Grotto Mall
+	0x03 Sticksville
+	0x04 Sherman Park
+	0x05 Sticksville
+	0x06 Waterfront mall
+	0x07 Capitol Avenue Bridge
+	0x08 Capitol Avenue Bridge (Benny + Clyde)
+	0x09 Downtown
+	0x0A W.S.L Co Warehouse
+	0x0B W.S.L Co Warehouse (inside)
+	0x0C W.S.L Co Warehouse (exit)
+	0x0D Armstrong Thru-way
+	0x0E Armstrong Thru-way (tunnel)
+	0x0F Armstrong Thru-way
+	0x10 Downtown
+	0x11 Flatirons Mall
+	0x12 Flatirons Mall
+	0x13 Downtown
+	0x14 Vacant 3rd Wheel Factory
+	0x15 Vacant 3rd Wheel Factory (inside)
+	0x16 Vacant 3rd Wheel Factory (inside)
+	0x17 Vacant 3rd Wheel Factory (exit)
+	0x18 Oak Hill Mall
+	0x19 Oak Hill Mall
+	0x1A Burb Village
+	0x1B Burb Village
+
+
+												
+												
+											0x08	0x0A
+											 |		 | 
+							0x04	0x06 -- 0x07 -- 0x09 -- 0x0A -- 0x0B [bldg] -- 0x0C -- 0x0D -- 0x0E -- 0x0F
+							 |		 |
+	0x00 -- 0x01 -- 0x02 -- 0x03 -- 0x05
+
+
+	(cont)
+
+									0x18 -- 0x19 -- 0x1A -- 0x1B
+									 |
+					0x15 -- 0x16 -- 0x17
+					 |
+					0x14
+					 |
+	0x11 -- 0x12 -- 0x13
+	 |
+	0x10
+	 |
+	0x0F
+
+
 
