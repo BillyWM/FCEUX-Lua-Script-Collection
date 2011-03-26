@@ -13,8 +13,22 @@ stats = {}
 inventory = {}
 floater = {text="", x=0, y=0, active=false, elapsedFrames=0}
 player = {}
+in_town = false;
 enemies = {[1]={x=0,y=0,height=0, same_height=0}, [2]={x=0,y=0,height=0,same_height=0}};
-enemies_alive = 0;
+	--where the bot is allowed to walk when navigating the level
+	--may contain multiple boxes for each area. Bot will stay inside each
+	--as it tries to navigate to its goal
+safe = {
+	[0x00] = {
+		[1] = {x1 = 0, y1 = 110, x2 = 768, y2 = 50, pt_next = {x=768, y=50}}
+	},
+	[0x01] = {
+		[1] = {x1 = 0, y1 = 109, x2 = 503, y2 = 50, pt_next = {x=454, y=120}}
+	},
+	[0x02] = {
+		[1] = {x1 = 0, y1 = 111, x2 = 503, y2 = 50, pt_next = {x=504, y=100}}
+	}
+}
 
 --Float a money value up the screen when coins are picked up
 function float_pickup(amount)
@@ -44,6 +58,8 @@ while true do
 
 	------------ READ IN SOME VALUES ----------------------------
 
+	area = memory.readbyte(0x0042);
+
 	 --relative screen scroll per section (0-255)
 	scroll_rel = memory.readbyte(0x00DC);
 	seg = memory.readbyte(0x008C);
@@ -69,6 +85,9 @@ while true do
 
 	--whether there are enemies left
 	enemies_remain = memory.readbyte(0x0475) ~= 255;
+	
+	--Hardcoded until better indicator can be found
+	in_town = (area == 2);
 
 	--enemy stats
 	enemies[1].seg = memory.readbyte(0x008E);
@@ -181,11 +200,32 @@ while true do
 
 	end
 
+	--If all enemies are dead, navigate to the next area
+	if (not enemies_remain or in_town) then
+		local bounds = safe[area][1];
+		-- After their planned move has been evaluted to be safe, move towards destination
+		local lr = false;
+		if (player.x < bounds.pt_next.x) then
+			joypad.set(1, {right=true})
+			lr = true;
+		end
+		if (player.x > bounds.pt_next.x) then
+			joypad.set(1, {left=true})
+			lr = true
+		end
+		if (player.y < bounds.pt_next.y and not lr) then joypad.set(1, {up=true}) end
+		if (player.y > bounds.pt_next.y and not lr) then joypad.set(1, {down=true}) end
+	end
+
+
+	-- DEBUG DISPLAY --
 	if (target > 0) then
 		gui.text(20, 140, enemies[target].y .. " " .. player.y)
 	end
 	gui.text(20, 160, enemies[1].height .. " " .. enemies[1].last_height .. " " .. tostring(enemies[1].is_coin) .. " " .. tostring(enemies[1].alive));
 	gui.text(20, 170, enemies[2].height .. " " .. enemies[2].last_height .. " " .. tostring(enemies[2].is_coin) .. " " .. tostring(enemies[2].alive));
+	gui.text(0, 180, "Player X, Y: " .. player.x .. " " .. player.y .. " scroll: " .. scroll_abs .. " screenX: " .. player.screenX);
+	if bounds then gui.text(0, 190, "Dest: " .. bounds.pt_next.x .. " " .. bounds.pt_next.y); end
 	--gui.text(20, 160, player.facing);
 
 	emu.frameadvance();
