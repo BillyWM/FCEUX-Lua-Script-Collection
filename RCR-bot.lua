@@ -7,12 +7,14 @@ require("x_billy");
 --constants:
 SIDE_LEFT = "left";
 SIDE_RIGHT = "right";
+ATTACK_DIST = 10; 		--how close to come (x) before attacking
 
 stats = {}
 inventory = {}
 floater = {text="", x=0, y=0, active=false, elapsedFrames=0}
 player = {}
-enemies = {[1]={x=0,y=0}, [2]={x=0,y=0}, [3]={x=0,y=0}};
+enemies = {[1]={x=0,y=0,height=0, same_height=0}, [2]={x=0,y=0,height=0,same_height=0}};
+enemies_alive = 0;
 
 --Float a money value up the screen when coins are picked up
 function float_pickup(amount)
@@ -65,22 +67,38 @@ while true do
 		player.facing = SIDE_RIGHT;
 	end
 
+	--whether there are enemies left
+	enemies_remain = memory.readbyte(0x0475) ~= 255;
+
 	--enemy stats
 	enemies[1].seg = memory.readbyte(0x008E);
 	enemies[2].seg = memory.readbyte(0x008F);
-	enemies[3].seg = memory.readbyte(0x0090);
 
-	for i=1, 3 do
+	for i=1, 2 do
 		local off = i - 1; --offset
-		enemies[i].x = memory.readbyte(0x0084 + off) + (enemies[i].seg * 256);
+		enemies[i].last_height = enemies[i].height;
+		enemies[i].height = memory.readbyte(0x00BB + off);
+		--count the frames that a coin has been at the same height, to detect coin that's gone
+		if (enemies[i].height == enemies[i].last_height) then
+			enemies[i].same_height = enemies[i].same_height + 1
+		else
+			enemies[i].same_height = 0;
+		end
+
+		enemies[i].x = memory.readbyte(0x0085 + off) + (enemies[i].seg * 256);
 		enemies[i].y = memory.readbyte(0x00A0 + off);
+		--unfortunately, doesn't work perfectly. Enemies that don't spawn will also be '2'
+		enemies[i].alive = (memory.readbyte(0x00CD + off) == 2);
+		enemies[i].is_coin = (memory.readbyte(0x00CD + off) == 16) and enemies[i].same_height < 10;
+
 		enemies[i].P1_dist = math.abs(player.x - enemies[i].x);
 		if (enemies[i].x >= player.x) then
 			enemies[i].P1_side = SIDE_RIGHT;
 		else
 			enemies[i].P1_side = SIDE_LEFT;
-			enemies[i].P1_dist = enemies[i].P1_dist - 16;
+			enemies[i].P1_dist = enemies[i].P1_dist - 10;
 		end
+
 	end
 
 	stats.punch = memory.readbyte(0x049F);
@@ -109,30 +127,66 @@ while true do
 
 	gui.text(0,0, ""); -- force clear of previous text
 
-	local e = 2;
-	if (enemies[e].P1_dist > 15) then
-		if (enemies[e].P1_side == SIDE_RIGHT) then
-			joypad.set(1, {right=true});
-		else
-			joypad.set(1, {left=true});
-		end
-	else
-		--change player's facing if needed and attack
-		if (enemies[e].P1_side == SIDE_RIGHT and player.facing == SIDE_LEFT) then
-			joypad.set(1, {right=true});
-		end
-		if (enemies[e].P1_side == SIDE_LEFT and player.facing == SIDE_RIGHT) then
-			joypad.set(1, {left=true});
-		end
-
-		joypad.tap("B");
+	--target the first coin
+	target = 0;
+	for i=1,2 do
+		if (enemies[i].is_coin) then target = i end
 	end
 
-	
-	gui.text(20, 120, enemies[1].P1_side .. ", " .. enemies[1].P1_dist);
-	gui.text(20, 130, enemies[2].P1_side .. ", " .. enemies[2].P1_dist);
-	gui.text(20, 140, enemies[3].P1_side .. ", " .. enemies[3].P1_dist);
-	gui.text(20, 160, player.facing);
+	-- if no coins left then target enemy
+	if (target == 0) then
+		for i=1,2 do
+			if (enemies[i].alive) then target = i end
+		end
+	end
+
+	--if a target still isn't found, target the first coin
+
+	--do move and attack logic if enemies are still alive,
+	--or there are coins to collect
+	if (target > 0 and enemies_remain) then
+
+		--remember, up is higher!
+		if (enemies[target].y > player.y) then joypad.set(1, {up=true}) end
+		if (enemies[target].y < player.y) then joypad.set(1, {down=true}) end
+
+		if (not enemies[target].is_coin) then
+			if (enemies[target].P1_dist > ATTACK_DIST) then
+				if (enemies[target].P1_side == SIDE_RIGHT) then
+					joypad.set(1, {right=true});
+				else
+					joypad.set(1, {left=true});
+				end
+			else
+				--change player's facing if needed
+				if (enemies[target].P1_side == SIDE_RIGHT and player.facing == SIDE_LEFT) then
+					joypad.set(1, {right=true});
+				end
+				if (enemies[target].P1_side == SIDE_LEFT and player.facing == SIDE_RIGHT) then
+					joypad.set(1, {left=true});
+				end
+
+				--line up before attacking
+				if (math.abs(enemies[target].y - player.y) < 3) then
+					joypad.tap("B");
+				end
+			end
+		else
+			--coin collecting behavior
+			if (enemies[target].x > player.x) then joypad.set(1, {right=true}) end
+			if (enemies[target].x < player.x) then joypad.set(1, {left=true}) end
+			if (enemies[target].y > player.y) then joypad.set(1, {up=true}) end
+			if (enemies[target].y < player.y) then joypad.set(1, {down=true}) end
+		end
+
+	end
+
+	if (target > 0) then
+		gui.text(20, 140, enemies[target].y .. " " .. player.y)
+	end
+	gui.text(20, 160, enemies[1].height .. " " .. enemies[1].last_height .. " " .. tostring(enemies[1].is_coin) .. " " .. tostring(enemies[1].alive));
+	gui.text(20, 170, enemies[2].height .. " " .. enemies[2].last_height .. " " .. tostring(enemies[2].is_coin) .. " " .. tostring(enemies[2].alive));
+	--gui.text(20, 160, player.facing);
 
 	emu.frameadvance();
 end
