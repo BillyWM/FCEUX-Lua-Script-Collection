@@ -19,14 +19,46 @@ enemies = {[1]={x=0,y=0,height=0, same_height=0}, [2]={x=0,y=0,height=0,same_hei
 	--may contain multiple boxes for each area. Bot will stay inside each
 	--as it tries to navigate to its goal
 safe = {
+	--Highschool
 	[0x00] = {
-		[1] = {x1 = 0, y1 = 110, x2 = 768, y2 = 50, pt_next = {x=768, y=50}}
+		[1] = {x1 = 0, y1 = 110, x2 = 768, y2 = 50},
+		pt_next = { [1] = {x=780, y=80} }
 	},
+	--Sticksville
 	[0x01] = {
-		[1] = {x1 = 0, y1 = 109, x2 = 503, y2 = 50, pt_next = {x=454, y=120}}
+		[1] = {x1 = 0, y1 = 109, x2 = 503, y2 = 50},
+		pt_next = { [1] = {x=454, y=120} }
 	},
+	-- Grotto Mall
 	[0x02] = {
-		[1] = {x1 = 0, y1 = 111, x2 = 503, y2 = 50, pt_next = {x=504, y=100}}
+		[1] = {x1 = 0, y1 = 111, x2 = 503, y2 = 50},
+		pt_next = { [1] = {x=524, y=100} }
+	},
+	-- Sticksville
+	[0x03] = {
+		[1] = {x1 = 0, y1 = 110, x2 = 768, y2 = 50},
+		pt_next = { [1] = {x=780, y=80} }
+	},
+	-- 0x04: park, skipped
+	--Sticksville
+	[0x05] = {
+		[1] = {x1 = 0, y1 = 112, x2 = 60, y2 = 50},
+		pt_next = { [1] = {x=328, y=124} }
+	},
+	--Waterfront Mall
+	[0x06] = {
+		[1] = {x1 = 0, y1 = 111, x2 = 768, y2 = 50},
+		pt_next = { [1] = {x=780, y=80} }
+	},
+	--Bridge
+	[0x07] = {
+		[1] = {x1 = 0, y1 = 96, x2 = 768, y2 = 50},
+		pt_next = { [1] = {x=780, y=50} }
+	},
+	-- Downtown
+	[0x09] = {
+		[1] = {x1 = 0, y1 = 111, x2 = 503, y2 = 50},
+		pt_next = { [1] = {x=414, y=120} }
 	}
 }
 
@@ -87,7 +119,7 @@ while true do
 	enemies_remain = memory.readbyte(0x0475) ~= 255;
 	
 	--Hardcoded until better indicator can be found
-	in_town = (area == 2);
+	in_town = (area == 2 or area == 6);
 
 	--enemy stats
 	enemies[1].seg = memory.readbyte(0x008E);
@@ -203,18 +235,25 @@ while true do
 	--If all enemies are dead, navigate to the next area
 	if (not enemies_remain or in_town) then
 		local bounds = safe[area][1];
-		-- After their planned move has been evaluted to be safe, move towards destination
+		local pt_next = safe[area]['pt_next'][1];
 		local lr = false;
-		if (player.x < bounds.pt_next.x) then
-			joypad.set(1, {right=true})
-			lr = true;
+		-- After their planned move has been evaluted to be safe, move towards destination
+
+		--few pixels leeway, otherwise bot gets stuck
+		if (math.abs(player.x - pt_next.x) > 4) then
+			if (player.x < pt_next.x) then
+				joypad.set(1, {right=true})
+				lr = true;
+			end
+			if (player.x > pt_next.x) then
+				joypad.set(1, {left=true})
+				lr = true
+			end
 		end
-		if (player.x > bounds.pt_next.x) then
-			joypad.set(1, {left=true})
-			lr = true
-		end
-		if (player.y < bounds.pt_next.y and not lr) then joypad.set(1, {up=true}) end
-		if (player.y > bounds.pt_next.y and not lr) then joypad.set(1, {down=true}) end
+
+		--move up only after moving sideways
+		if (player.y < pt_next.y and not lr) then joypad.set(1, {up=true}) end
+		if (player.y > pt_next.y and not lr) then joypad.set(1, {down=true}) end
 	end
 
 
@@ -225,7 +264,7 @@ while true do
 	gui.text(20, 160, enemies[1].height .. " " .. enemies[1].last_height .. " " .. tostring(enemies[1].is_coin) .. " " .. tostring(enemies[1].alive));
 	gui.text(20, 170, enemies[2].height .. " " .. enemies[2].last_height .. " " .. tostring(enemies[2].is_coin) .. " " .. tostring(enemies[2].alive));
 	gui.text(0, 180, "Player X, Y: " .. player.x .. " " .. player.y .. " scroll: " .. scroll_abs .. " screenX: " .. player.screenX);
-	if bounds then gui.text(0, 190, "Dest: " .. bounds.pt_next.x .. " " .. bounds.pt_next.y); end
+	if bounds then gui.text(0, 190, "Dest: " .. pt_next.x .. " " .. pt_next.y); end
 	--gui.text(20, 160, player.facing);
 
 	emu.frameadvance();
