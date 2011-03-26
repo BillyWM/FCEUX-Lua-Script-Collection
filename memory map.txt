@@ -62,10 +62,9 @@ Sprites (any/general):
 
 NPCs/enemies:
 
-	0085 - 0089 (1b): X position of an NPC
+	0085 - 0086 (1b): X position of an NPC
 	008E, 008F (1b): Area section of NPC
 		(see below under "Player 1" for explanation)
-	0089: item x pos
 	00A0, 00A1 (1b): Y pos of NPC
 	00A9, 00AA (1b): NPC visibility? (set to > 1 for invisible)
 	02B9, 02BD (1b): Animation tracker of sprite. Toggles back and forth as sprites walk in place (by cheat/lock X pos)
@@ -77,7 +76,7 @@ NPCs/enemies:
 		Somehow related to up-down movement of NPCS.
 		Flips rapidly between many values as they move
 	009D:
-		Takes various vaguely bitflag-looking values when an NPC dies, but also at other time (32, 64, 112, 88, etc)
+		Takes various vaguely bitflag-looking values when an NPC dies, but also at other times (32, 64, 112, 88, etc)
 	00BB, 00BC
 		Height of NPC above ground (just like for items)
 		Applies to falling NPCs, or when they turn into coins.
@@ -97,8 +96,7 @@ NPCs/enemies:
 
 Items:
 
-	(Not 100% certain yet, as item info seems to overlap with NPCs)
-
+	0087 - 0089: item x pos
 	0091, 0092: Area section of item
 	00A2 - 00A4: Y pos of item
 	00A6: Y pos that...
@@ -126,7 +124,9 @@ UNEXPLAINED:
 	00E1, 00E2: Takes strange values when zoning between areas
 	00E3 - 00ED: Stays at 0
 	00F2: Stays at 255
-	00F3 - 00F3: Stays at 0
+	00F3 - 00F5: Stays at 0
+	00FB - 00FD: Flips between values as enemies move and attack
+	00FE - 010A
 
 
 Player 1:
@@ -246,5 +246,18 @@ Other:
 	0475: NPC related somehow. Setting to 255 makes it impossible to pick up any coins
 		Takes a value of 2 or 3 when enemies are still alive in the area. 255 when they're all dead.
 	0094: Screen # where an item last hit something? (including side of screen or player)
-		Changes to -1 (255) or 3 when it goes off left/right side of screen. 
+		Changes to -1 (255) or 3 when it goes off left/right side of screen.
+	00F8: Scroll + pixel drawing related?
+		Flips between 136 and 140 as screen scrolls (either direction)
+	010B: Drawing related?
+		Normally switches each frame between 0 and 1. When shop menu text is drawn, value moves upward.
+		Continues to go up as more text is drawn (e.g. navigating back and forth in submenus) but not down.
+		Back to 0/1 upon exit
+		Also applies to belongings menu (increase every time text is redrawn, including throwing items away)
+	00DA: Switches to various values when buying an item in shops
+			Value depends on specific shop, and whether item is "to go"
+			(not the 'smile')
+	0110: 15 normally, 12 in all pause submenus (belongings/password/level/status/help)
+	0111: 12 normally, 9 in belongs + help submenu, 15 in others
+	0112, 0113: Flips to various values depending on area or whether in shop
 
