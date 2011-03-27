@@ -295,6 +295,12 @@ List of areas:
 	0x1A Burb Village
 	0x1B Burb Village
 	0x1C River City High
+	0x1D River City High (gym)
+	0x1E River City High (upstairs L1)
+	0x1F River City High (upstairs L2)
+	0x20 River City High (upstairs L3)
+	0x21 River City High (classroom - rescue)
+	0x22 Rooftop
 
 
 												
