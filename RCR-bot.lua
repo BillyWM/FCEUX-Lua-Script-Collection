@@ -8,6 +8,7 @@ require("x_billy");
 SIDE_LEFT = "left";
 SIDE_RIGHT = "right";
 ATTACK_DIST = 10; 		--how close to come (x) before attacking
+GOAL_RUN_THRESH = 50;	--how close to the goal (x) before we switch from run to walk
 
 stats = {}
 inventory = {}
@@ -62,6 +63,16 @@ safe = {
 	}
 }
 
+--checks whether a destination point is a 'safe' zone for the target area
+function in_bounds(x, y)
+	local b = safe[area][1];
+	if (x >= b.x1 and x <= b.x2 and y <= b.y1 and y >= b.y2) then
+		return true
+	else
+		return false
+	end
+end
+
 --Float a money value up the screen when coins are picked up
 function float_pickup(amount)
 	floater.active = true;
@@ -109,7 +120,7 @@ while true do
 	scroll_abs = scroll_rel + (memory.readbyte(0x003D) * 256);
 	player.screenX = player.x - scroll_abs;
 
-	if (memory.readbytesigned(0x006F) == -1) then
+	if (memory.readbytesigned(0x006F) == -128) then
 		player.facing = SIDE_LEFT;
 	else
 		player.facing = SIDE_RIGHT;
@@ -204,17 +215,19 @@ while true do
 		if (not enemies[target].is_coin) then
 			if (enemies[target].P1_dist > ATTACK_DIST) then
 				if (enemies[target].P1_side == SIDE_RIGHT) then
-					joypad.set(1, {right=true});
+					--joypad.set(1, {right=true});
+					joypad.tap("right");
 				else
-					joypad.set(1, {left=true});
+					--joypad.set(1, {left=true});
+					joypad.tap("left");
 				end
 			else
 				--change player's facing if needed
 				if (enemies[target].P1_side == SIDE_RIGHT and player.facing == SIDE_LEFT) then
-					joypad.set(1, {right=true});
+					joypad.tap("right");
 				end
 				if (enemies[target].P1_side == SIDE_LEFT and player.facing == SIDE_RIGHT) then
-					joypad.set(1, {left=true});
+					joypad.tap("left");
 				end
 
 				--line up before attacking
@@ -224,10 +237,10 @@ while true do
 			end
 		else
 			--coin collecting behavior
-			if (enemies[target].x > player.x) then joypad.set(1, {right=true}) end
-			if (enemies[target].x < player.x) then joypad.set(1, {left=true}) end
-			if (enemies[target].y > player.y) then joypad.set(1, {up=true}) end
-			if (enemies[target].y < player.y) then joypad.set(1, {down=true}) end
+			if (enemies[target].x > player.x and in_bounds(player.x + 2, player.y)) then joypad.tap("right") end
+			if (enemies[target].x < player.x and in_bounds(player.x - 2, player.y)) then joypad.tap("left") end
+			if (enemies[target].y > player.y and in_bounds(player.y - 2, player.y)) then joypad.set(1, {up=true}) end
+			if (enemies[target].y < player.y and in_bounds(player.y + 2, player.y)) then joypad.set(1, {down=true}) end
 		end
 
 	end
@@ -239,17 +252,29 @@ while true do
 		local lr = false;
 		-- After their planned move has been evaluted to be safe, move towards destination
 
+		local goal_dist = math.abs(player.x - pt_next.x);
 		--few pixels leeway, otherwise bot gets stuck
-		if (math.abs(player.x - pt_next.x) > 4) then
+		if (goal_dist > 6) then
+
+			--tap other direction to stop running once we're near the target so we don't overshoot
+			if (goal_dist < GOAL_RUN_THRESH and player.running) then
+				if (player.facing == SIDE_RIGHT) then joypad.tap("left") else joypad.tap("right") end
+			end
+
+			--move the right way, walking if we're close
 			if (player.x < pt_next.x) then
-				joypad.set(1, {right=true})
+				--joypad.set(1, {right=true})
+				if (goal_dist > GOAL_RUN_THRESH) then joypad.tap("right") else joypad.set(1, {right=true}) end
 				lr = true;
 			end
+
 			if (player.x > pt_next.x) then
-				joypad.set(1, {left=true})
+				if (goal_dist > GOAL_RUN_THRESH) then joypad.tap("left") else joypad.set(1, {left=true}) end
 				lr = true
 			end
+		else
 		end
+		
 
 		--move up only after moving sideways
 		if (player.y < pt_next.y and not lr) then joypad.set(1, {up=true}) end
@@ -258,14 +283,11 @@ while true do
 
 
 	-- DEBUG DISPLAY --
-	if (target > 0) then
-		gui.text(20, 140, enemies[target].y .. " " .. player.y)
-	end
-	gui.text(20, 160, enemies[1].height .. " " .. enemies[1].last_height .. " " .. tostring(enemies[1].is_coin) .. " " .. tostring(enemies[1].alive));
-	gui.text(20, 170, enemies[2].height .. " " .. enemies[2].last_height .. " " .. tostring(enemies[2].is_coin) .. " " .. tostring(enemies[2].alive));
-	gui.text(0, 180, "Player X, Y: " .. player.x .. " " .. player.y .. " scroll: " .. scroll_abs .. " screenX: " .. player.screenX);
+	gui.text(20, 180, "1: " .. tostring(enemies[1].is_coin) .. " " .. tostring(enemies[1].alive));
+	gui.text(100, 180, "2: " .. tostring(enemies[2].is_coin) .. " " .. tostring(enemies[2].alive));
+	gui.text(0, 200, "Player X, Y: " .. player.x .. " " .. player.y .. " scroll: " .. scroll_abs .. " screenX: " .. player.screenX);
 	if bounds then gui.text(0, 190, "Dest: " .. pt_next.x .. " " .. pt_next.y); end
-	--gui.text(20, 160, player.facing);
+	gui.text(20, 210, player.facing);
 
 	emu.frameadvance();
 end
