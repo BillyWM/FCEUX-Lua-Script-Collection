@@ -4,15 +4,13 @@
 
 
 --taps a button
-local last = {up=false,down=false,left=false,right=false,A=false,A=false,start=false,select=false}
+local last = {up=false,down=false,left=false,right=false,A=false,B=false,start=false,select=false}
 
 if not joypad.tap then
-
 	joypad.tap = function(btn)
 		if (last[btn] == false) then
 			joypad.set(1, {[btn]=true});
 		end
 		last = joypad.read(1);
 	end
-
 end
