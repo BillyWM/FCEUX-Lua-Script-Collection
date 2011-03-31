@@ -1,4 +1,5 @@
 To use:
+
 1. Download and unzip
 2. Place all the ".lua" files in the "luaScripts" directory of your FCEUX folder
 3. Load River City Ransom
