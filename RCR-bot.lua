@@ -7,18 +7,22 @@ require("x_billy");
 --constants:
 SIDE_LEFT = "left";
 SIDE_RIGHT = "right";
-ATTACK_DIST = 10; 		--how close to come (x) before attacking
-GOAL_RUN_THRESH = 50;	--how close to the goal (x) before we switch from run to walk
+ATTACK_THRESH = 10;			--how close to come (x) before attacking
+GOAL_RUN_THRESH = 50;		--how close to the goal (x) before we switch from run to walk
 
 stats = {}
 inventory = {}
 floater = {text="", x=0, y=0, active=false, elapsedFrames=0}
 player = {}
 in_town = false;
-enemies = {[1]={x=0,y=0,height=0, same_height=0}, [2]={x=0,y=0,height=0,same_height=0}};
-	--where the bot is allowed to walk when navigating the level
-	--may contain multiple boxes for each area. Bot will stay inside each
-	--as it tries to navigate to its goal
+enemies = {[0]= {x=0,y=0,same_height=0,threat=0}, --0 is dummy
+			[1]={x=0,y=0,height=0, same_height=0}, [2]={x=0,y=0,height=0,same_height=0}};
+towns = {[0x02]=1, [0x06]=1, [0x11]=1, [0x12]=1, [0x18]=1, [0x19]=1, [0x1A]=1}; --for detecting in_town
+weapons = {[0] = {x=0, y=0}, [1] = {x=0,y=0}, [2] = {x=0,y=0}};
+
+--where the bot is allowed to walk when navigating the level
+--may contain multiple boxes for each area. Bot will stay inside each
+--as it tries to navigate to its goal
 safe = {
 	--Highschool
 	[0x00] = {
@@ -37,13 +41,15 @@ safe = {
 	},
 	-- Sticksville
 	[0x03] = {
-		[1] = {x1 = 0, y1 = 110, x2 = 768, y2 = 50},
+		[1] = {x1 = 0, y1 = 111, x2 = 768, y2 = 50},
 		pt_next = { [1] = {x=780, y=80} }
 	},
 	-- 0x04: park, skipped
 	--Sticksville
 	[0x05] = {
 		[1] = {x1 = 0, y1 = 112, x2 = 60, y2 = 50},
+		[2] = {x1 = 60, y1 = 110, x2 = 390, y2 = 96},
+		[2] = {x1 = 390, y1 = 112, x2 = 503, y2 = 50},
 		pt_next = { [1] = {x=328, y=124} }
 	},
 	--Waterfront Mall
@@ -65,12 +71,11 @@ safe = {
 
 --checks whether a destination point is a 'safe' zone for the target area
 function in_bounds(x, y)
-	local b = safe[area][1];
-	if (x >= b.x1 and x <= b.x2 and y <= b.y1 and y >= b.y2) then
-		return true
-	else
-		return false
+	for i,b in ipairs(safe[area]) do
+		if (x >= b.x1 and x <= b.x2 and y <= b.y1 and y >= b.y2) then return true end
 	end
+
+	return false
 end
 
 --Float a money value up the screen when coins are picked up
@@ -130,7 +135,7 @@ while true do
 	enemies_remain = memory.readbyte(0x0475) ~= 255;
 	
 	--Hardcoded until better indicator can be found
-	in_town = (area == 2 or area == 6);
+	in_town = towns[area] ~= nil;
 
 	--enemy stats
 	enemies[1].seg = memory.readbyte(0x008E);
@@ -138,6 +143,7 @@ while true do
 
 	for i=1, 2 do
 		local off = i - 1; --offset
+		local e = enemies[i];
 		enemies[i].last_height = enemies[i].height;
 		enemies[i].height = memory.readbyte(0x00BB + off);
 		--count the frames that a coin has been at the same height, to detect coin that's gone
@@ -158,8 +164,12 @@ while true do
 			enemies[i].P1_side = SIDE_RIGHT;
 		else
 			enemies[i].P1_side = SIDE_LEFT;
-			enemies[i].P1_dist = enemies[i].P1_dist - 10;
+			enemies[i].P1_dist = enemies[i].P1_dist - 8;
 		end
+
+		local d = enemies[i].P1_dist;
+		--threat. 1/log(dist) means it's inversely proportional to distance
+		enemies[i].threat = 30 * 1/math.log(d)
 
 	end
 
@@ -195,34 +205,31 @@ while true do
 		if (enemies[i].is_coin) then target = i end
 	end
 
-	-- if no coins left then target enemy
+	-- if no coins left then target enemy with the highest threat
 	if (target == 0) then
 		for i=1,2 do
-			if (enemies[i].alive) then target = i end
+			if (enemies[i].alive and enemies[i].threat > enemies[target].threat) then target = i end
 		end
 	end
-
-	--if a target still isn't found, target the first coin
 
 	--do move and attack logic if enemies are still alive,
 	--or there are coins to collect
 	if (target > 0 and enemies_remain) then
 
 		--remember, up is higher!
-		if (enemies[target].y > player.y) then joypad.set(1, {up=true}) end
-		if (enemies[target].y < player.y) then joypad.set(1, {down=true}) end
+		if (enemies[target].y > player.y and in_bounds(player.x, player.y + 1)) then joypad.set(1, {up=true}) end
+		if (enemies[target].y < player.y and in_bounds(player.x, player.y - 1)) then joypad.set(1, {down=true}) end
 
-		if (not enemies[target].is_coin) then
-			if (enemies[target].P1_dist > ATTACK_DIST) then
+		--TODO: Change to a system of target points
+		if (not enemies[target].is_coin and in_bounds(player.x, player.y)) then
+			if (enemies[target].P1_dist > ATTACK_THRESH) then
 				if (enemies[target].P1_side == SIDE_RIGHT) then
-					--joypad.set(1, {right=true});
 					joypad.tap("right");
 				else
-					--joypad.set(1, {left=true});
 					joypad.tap("left");
 				end
 			else
-				--change player's facing if needed
+				--change player's facing if needed before attack
 				if (enemies[target].P1_side == SIDE_RIGHT and player.facing == SIDE_LEFT) then
 					joypad.tap("right");
 				end
@@ -239,9 +246,14 @@ while true do
 			--coin collecting behavior
 			if (enemies[target].x > player.x and in_bounds(player.x + 2, player.y)) then joypad.tap("right") end
 			if (enemies[target].x < player.x and in_bounds(player.x - 2, player.y)) then joypad.tap("left") end
-			if (enemies[target].y > player.y and in_bounds(player.y - 2, player.y)) then joypad.set(1, {up=true}) end
-			if (enemies[target].y < player.y and in_bounds(player.y + 2, player.y)) then joypad.set(1, {down=true}) end
+			if (enemies[target].y > player.y and in_bounds(player.x, player.y + 2)) then joypad.set(1, {up=true}) end
+			if (enemies[target].y < player.y and in_bounds(player.x, player.y - 2)) then joypad.set(1, {down=true}) end
 		end
+
+		--if the player is somehow knocked out of bounds, make them go back
+		local b = safe[area][1];
+		if (player.y > b.y1) then joypad.set(1, {down=true}) end
+		if (player.y < b.y2) then joypad.set(1, {up=true}) end
 
 	end
 
@@ -272,7 +284,6 @@ while true do
 				if (goal_dist > GOAL_RUN_THRESH) then joypad.tap("left") else joypad.set(1, {left=true}) end
 				lr = true
 			end
-		else
 		end
 		
 
@@ -283,10 +294,9 @@ while true do
 
 
 	-- DEBUG DISPLAY --
-	gui.text(20, 180, "1: " .. tostring(enemies[1].is_coin) .. " " .. tostring(enemies[1].alive));
-	gui.text(100, 180, "2: " .. tostring(enemies[2].is_coin) .. " " .. tostring(enemies[2].alive));
+	gui.text(20, 190, "1: " .. tostring(enemies[1].is_coin) .. " " .. tostring(enemies[1].alive));
+	gui.text(100, 190, "2: " .. tostring(enemies[2].is_coin) .. " " .. tostring(enemies[2].alive));
 	gui.text(0, 200, "Player X, Y: " .. player.x .. " " .. player.y .. " scroll: " .. scroll_abs .. " screenX: " .. player.screenX);
-	if bounds then gui.text(0, 190, "Dest: " .. pt_next.x .. " " .. pt_next.y); end
 	gui.text(20, 210, player.facing);
 
 	emu.frameadvance();
