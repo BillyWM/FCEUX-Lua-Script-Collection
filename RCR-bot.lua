@@ -9,6 +9,7 @@ SIDE_LEFT = "left";
 SIDE_RIGHT = "right";
 ATTACK_THRESH = 10;			--how close to come (x) before attacking
 GOAL_RUN_THRESH = 50;		--how close to the goal (x) before we switch from run to walk
+STOP_DIST = 20;
 
 stats = {}
 inventory = {}
@@ -47,9 +48,9 @@ safe = {
 	-- 0x04: park, skipped
 	--Sticksville
 	[0x05] = {
-		[1] = {x1 = 0, y1 = 112, x2 = 60, y2 = 50},
-		[2] = {x1 = 60, y1 = 110, x2 = 390, y2 = 96},
-		[2] = {x1 = 390, y1 = 112, x2 = 503, y2 = 50},
+		[1] = {x1 = 0,	 y1 = 112, x2 = 60,  y2 = 50},
+		[2] = {x1 = 60,  y1 = 110, x2 = 390, y2 = 96},
+		[3] = {x1 = 390, y1 = 112, x2 = 503, y2 = 50},
 		pt_next = { [1] = {x=328, y=124} }
 	},
 	--Waterfront Mall
@@ -66,6 +67,13 @@ safe = {
 	[0x09] = {
 		[1] = {x1 = 0, y1 = 111, x2 = 503, y2 = 50},
 		pt_next = { [1] = {x=414, y=120} }
+	},
+	[0x0A] = {
+		[1] = {x1 = 0, y1 = 112, x2 = 60, y2 = 50},
+		[2] = {x1 = 60, y1 = 112, x2 = 240, y2 = 92},
+		[3] = {x1 = 240, y1 = 112, x2 = 315, y2 = 50},
+		[4] = {x1 = 247, y1 = 96, x2 = 473, y2 = 50},
+		pt_next = { [1] = {x=448, y=96} }
 	}
 }
 
@@ -223,9 +231,10 @@ while true do
 		--TODO: Change to a system of target points
 		if (not enemies[target].is_coin and in_bounds(player.x, player.y)) then
 			if (enemies[target].P1_dist > ATTACK_THRESH) then
-				if (enemies[target].P1_side == SIDE_RIGHT) then
+				--run towards the enemy but don't run out of bounds (e.g. right into a pit)
+				if (enemies[target].P1_side == SIDE_RIGHT and in_bounds(player.x + STOP_DIST, player.y)) then
 					joypad.tap("right");
-				else
+				elseif (enemies[target].P1_side == SIDE_LEFT and in_bounds(player.x - STOP_DIST, player.y)) then
 					joypad.tap("left");
 				end
 			else
@@ -254,6 +263,11 @@ while true do
 		local b = safe[area][1];
 		if (player.y > b.y1) then joypad.set(1, {down=true}) end
 		if (player.y < b.y2) then joypad.set(1, {up=true}) end
+
+		if (player.running) then
+			if (player.facing == SIDE_RIGHT and not in_bounds(player.x + STOP_DIST, player.y)) then joypad.tap("left") end
+			if (player.facing == SIDE_LEFT and not in_bounds(player.x - STOP_DIST, player.y)) then joypad.tap("right") end
+		end
 
 	end
 
