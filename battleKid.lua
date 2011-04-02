@@ -1,3 +1,8 @@
+--Various features. Helpful: Auto-savestate in each new room
+--Just for fun: Drag and drop
+--Author: Billy Wenge-Murphy (http://billy.wenge-murphy.com/)
+--Hack freely.
+
 --constants
 BYTE_MAPX = 0x001E;
 BYTE_MAPY = 0x001D;
