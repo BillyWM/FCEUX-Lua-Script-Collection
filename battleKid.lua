@@ -1,5 +1,7 @@
---Various features. Helpful: Auto-savestate in each new room
---Just for fun: Drag and drop
+--Various features.
+--	Helpful: 		Auto-savestate in each new room.
+--					Minimap
+--	Just for fun: 	Drag and drop
 --Author: Billy Wenge-Murphy (http://billy.wenge-murphy.com/)
 --Hack freely.
 
@@ -10,6 +12,9 @@ BYTE_PLAYERX = 0x0031;
 BYTE_PLAYERY = 0x0033;
 BYTE_ONFLOOR = 0x004D;
 BYTE_ALIVE = 0x0007;
+
+ENABLE_DRAG_DROP = false;
+ENABLE_MINIMAP = true;
 
 last_mapX = memory.readbyte(BYTE_MAPX);
 last_mapY = memory.readbyte(BYTE_MAPY);
@@ -30,8 +35,9 @@ while true do
 
 	if (not alive) then savestate.load(anon_state) end
 
+	--drag and drop. Not perfected; often breaks hitboxes
 	mouse = input.get();
-	if (mouse.leftclick) then
+	if (mouse.leftclick and ENABLE_DRAG_DROP) then
 		memory.writebyte(BYTE_PLAYERX, mouse.xmouse);
 		memory.writebyte(BYTE_PLAYERX + 1, mouse.xmouse + 13);
 		memory.writebyte(BYTE_PLAYERX + 4, mouse.xmouse - 1);
