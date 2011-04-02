@@ -1,0 +1,17 @@
+0007: Either death or collision related. set to 00 for invincible!
+001D: Map Y room (2x actual value?)
+001E: Map X room
+0046: Jumping/in air flag
+004D: On ground flag
+0058: Gravity/fall speed
+	0 with upward motion, increases then maxes out at 19 when falling
+0031: Player left hitbox?
+	0032: Player right hitbox? 13 higher than above
+	0035: Also X. 1 less than 0031
+
+0033: Player top? (Y)
+	0034: Also Y. 13 higher
+	0036: Player bottom?. 29 higher than 0033
+
+004F: Jump distance traveled (?)
+	Increases to 16, then falling starts

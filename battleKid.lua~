@@ -1,0 +1,26 @@
+--constants
+BYTE_MAPX = 0x001E;
+BYTE_MAPY = 0x001D;
+BYTE_PLAYERX = 0x0031;
+BYTE_PLAYERY = 0x0033;
+BYTE_ONFLOOR = 0x004D;
+
+last_mapX = memory.readbyte(BYTE_MAPX);
+last_mapY = memory.readbyte(BYTE_MAPY);
+anon_state = savestate.create();
+
+while true do
+
+	cur_mapX = memory.readbyte(BYTE_MAPX);
+	cur_mapY = memory.readbyte(BYTE_MAPY);
+	on_floor = memory.readbyte(BYTE_ONFLOOR);
+
+	if (cur_mapX ~= last_mapX or cur_mapY ~= last_mapY and on_floor) then
+		savestate.save(anon_state);
+	end
+
+	local mouse = zapper.read();
+	if (mouse.click) then
+		memory.writebyte(BYTE_PLAYERX, mouse.xmouse);
+	
+end
