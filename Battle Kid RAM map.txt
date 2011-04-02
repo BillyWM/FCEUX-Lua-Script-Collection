@@ -1,4 +1,5 @@
-0007: Either death or collision related. set to 00 for invincible!
+0007: Animation related. Set to 00 for invincible
+0020: Actual "is dead" flag. 00 = alive, 01 = dead
 001D: Map Y room (2x actual value?)
 001E: Map X room
 0046: Jumping/in air flag
