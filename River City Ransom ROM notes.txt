@@ -1,0 +1,57 @@
+(ALL numbers are hex, even those not prefixed with 0x)
+
+Clock on top of school at beginning of game has this tile pattern for its middle portion:
+
+	12 32 33 21
+
+That same sequence is found in the ROM at 0x05F4
+
+Sky to the left of tower:
+
+	02 02 08
+
+That sequence occurs at 0x05EC
+
+This level data is preceded by:
+
+	A9B8A9B8 A9B8A9B8 A9B8A9B8 9C9B9C9B 9C9B9C9B 9C9B9C9B
+
+This sequence, although with different repetition lengths, also occurs a small bit further up, various times
+
+Meaning unknown.
+
+The leftmost bike rack is the sequence:
+
+	74 83 AB 92
+
+at 0x076C. After this is many repetitions of 62 (shaded ground), followed by a few bytes for the reflection of the gate
+	then more shaded ground, then more bike rack. The final bike rack sequence appears to describe only one section. It
+	is not repeated if modified.
+
+	A second bike rack sequence (AB 80 83) appears at 0x08CC
+	And another at 0x0A2D
+
+At 0x078C starts a long sequence of 01, representing normal ground
+
+	This sequence seems to be copied to all the rows of the ground, then repeated twice. For the third area of
+		the level, it only is copied to the top row. The others remain normal ground rather than whatever it's hacked to
+
+
+
+
+
+
+
+
+
+
+First mall:
+	0x0D0C - Sky (series of 14 14....)
+	0x0E6C - Bottom of first shop (69 38 AE...)
+		runs until 0x0E8B, describing first two shops. Does not describe Sushi restaruant. Delimited by AA AA 00 00 instead
+	0x0B4C - Sushi restaurant (sky above it)
+		This block describes two shops (sushi + bookstore to the right)
+		runs until 0x0CCB, the bottom of the pole at the right of the area. Delimited by AA AA 00 00
+		Yes, these are the 3rd and 4th shops, and they come earlier in the ROM!
+
+
