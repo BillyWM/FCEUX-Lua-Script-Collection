@@ -7,10 +7,11 @@ require("x_billy");
 --constants:
 SIDE_LEFT = "left";
 SIDE_RIGHT = "right";
-ATTACK_THRESH = 10;			--how close to come (x) before attacking
-GOAL_RUN_THRESH = 50;		--how close to the goal (x) before we switch from run to walk
+ATTACK_THRESH = 10;				--how close to come (x) before attacking
+GOAL_RUN_THRESH = 50;			--how close to the goal (x) before we switch from run to walk
 STOP_DIST = 20;
-ENABLE_MONEY_FLOAT = true;	--Whether to float text over the player's head when they pick up money
+ENABLE_MONEY_FLOAT = true;		--Whether to float text over the player's head when they pick up money
+ENABLE_DEBUG_DISPLAY = true;
 
 stats = {}
 inventory = {}
@@ -325,10 +326,12 @@ while true do
 	money_last = money;
 
 	-- DEBUG DISPLAY --
-	gui.text(20, 190, "1: " .. tostring(enemies[1].is_coin) .. " " .. tostring(enemies[1].alive));
-	gui.text(100, 190, "2: " .. tostring(enemies[2].is_coin) .. " " .. tostring(enemies[2].alive));
-	gui.text(0, 200, "Player X, Y: " .. player.x .. " " .. player.y .. " scroll: " .. scroll_abs .. " screenX: " .. player.screenX);
-	gui.text(20, 210, player.facing);
+	if (ENABLE_DEBUG_DISPLAY) then
+		gui.text(20, 190, "1: " .. tostring(enemies[1].is_coin) .. " " .. tostring(enemies[1].alive));
+		gui.text(100, 190, "2: " .. tostring(enemies[2].is_coin) .. " " .. tostring(enemies[2].alive));
+		gui.text(0, 200, "Player X, Y: " .. player.x .. " " .. player.y .. " scroll: " .. scroll_abs .. " screenX: " .. player.screenX);
+		gui.text(20, 210, player.facing);
+	end
 
 	emu.frameadvance();
 end

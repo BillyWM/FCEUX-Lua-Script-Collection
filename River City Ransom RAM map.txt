@@ -1,6 +1,8 @@
+				River City Ransom
+
 No RAM map was available so I started figuring it on my own.
 These are some messy notes describing what I could discover so far
-- Billy Wenge-Murphy
+- William Wenge-Murphy
 
 ===========================================================
 (1b) is a one byte value, (2b) is 2
