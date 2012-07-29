@@ -1,6 +1,6 @@
 -- River City Ransom bot. Game plays itself.
--- Author: Billy Wenge-Murphy (http://billy.wenge-murphy.com/)
--- Hack freely.
+-- Author: William Wenge-Murphy (http://billy.wenge-murphy.com/)
+-- Hack freely, but give proper credit.
 
 require("x_billy");
 
@@ -10,6 +10,7 @@ SIDE_RIGHT = "right";
 ATTACK_THRESH = 10;			--how close to come (x) before attacking
 GOAL_RUN_THRESH = 50;		--how close to the goal (x) before we switch from run to walk
 STOP_DIST = 20;
+ENABLE_MONEY_FLOAT = true;	--Whether to float text over the player's head when they pick up money
 
 stats = {}
 inventory = {}
@@ -124,6 +125,11 @@ while true do
 	money = DEC_HEX(memory.readbyte(0x04C7)) / 100 +	--cents
 			DEC_HEX(memory.readbyte(0x04C8)) +			--dollars
 			DEC_HEX(memory.readbyte(0x04C9)) * 10;		--higher dollars
+
+	if (money_last == nil) then money_last = money end; --give money_last a value the first time
+	if (money > money_last) then
+		float_pickup(money - money_last);
+	end
 
 	paused = memory.readbyte(0x003F);
 
@@ -306,6 +312,17 @@ while true do
 		if (player.y > pt_next.y and not lr) then joypad.set(1, {down=true}) end
 	end
 
+	--Animate the floating money pickup
+	if (ENABLE_MONEY_FLOAT) then
+		if (floater.active) then
+			floater.y = floater.y - 1.1;
+			floater.elapsedFrames = floater.elapsedFrames + 1;
+			gui.text(floater.x, floater.y, floater.text);
+			if (floater.elapsedFrames > 150) then floater.active = false end
+		end
+	end
+
+	money_last = money;
 
 	-- DEBUG DISPLAY --
 	gui.text(20, 190, "1: " .. tostring(enemies[1].is_coin) .. " " .. tostring(enemies[1].alive));
